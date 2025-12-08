@@ -1,0 +1,104 @@
+import express from "express";
+import cors from "cors";
+import multer from "multer";
+import path from "path";
+import { fileURLToPath } from "url";
+import { Client } from "pg";
+
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const app = express();
+const PORT = 5050;
+
+
+app.use(cors());
+
+
+app.use(express.json());
+
+
+const client = new Client({
+  user: "YOUR_PG_USER",
+  host: "localhost",
+  database: "photo_collection_db",
+  password: "YOUR_PG_PASSWORD",
+  port: 5432,
+});
+
+client.connect()
+  .then(() => console.log("Connected to Postgres"))
+  .catch(err => console.error("Connection error:", err));
+
+
+
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, "uploads/"),
+  filename: (req, file, cb) => cb(null, Date.now() + path.extname(file.originalname)),
+});
+const upload = multer({ storage });
+
+
+// getter
+app.get("/photos", async (req, res) => {
+    try {
+      console.log("Fetching photos from DB...");
+      const result = await client.query("SELECT * FROM photos ORDER BY created_at DESC");
+      console.log("Fetched rows:", result.rows);
+      res.json(result.rows);
+    } catch (err) {
+      console.error("Error fetching photos:", err);
+      res.status(500).json({ error: "Server error" });
+    }
+  });
+
+
+//poster
+app.post("/photos", upload.single("photo"), async (req, res) => {
+  try {
+    const file = req.file;
+    if (!file) return res.status(400).json({ error: "No file uploaded" });
+
+    const {
+      title,
+      description,
+      camera_model,
+      iso,
+      aperture,
+      shutter_speed
+    } = req.body;
+
+    const query = `
+      INSERT INTO photos 
+        (title, description, filename, camera_model, iso, aperture, shutter_speed)
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
+      RETURNING *;
+    `;
+
+    const values = [
+      title,
+      description,
+      file.filename,
+      camera_model,
+      iso || null,
+      aperture || null,
+      shutter_speed || null
+    ];
+
+    const result = await client.query(query, values);
+
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error("Error uploading photo:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+
+
+app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
+
