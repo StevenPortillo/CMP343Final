@@ -17,10 +17,12 @@ app.use(cors());
 
 
 app.use(express.json());
+app.use('/uploads', express.static('uploads'));
+
 
 
 const client = new Client({
-  user: "YOUR_PG_USER",
+  user: "stevenportillo",
   host: "localhost",
   database: "photo_collection_db",
   password: "YOUR_PG_PASSWORD",
@@ -41,6 +43,16 @@ const storage = multer.diskStorage({
   filename: (req, file, cb) => cb(null, Date.now() + path.extname(file.originalname)),
 });
 const upload = multer({ storage });
+
+
+// Test route
+app.get("/test", (req, res) => {
+  res.json({ 
+    message: "Server is running!", 
+    timestamp: new Date().toISOString(),
+    database: "photo_collection_db"
+  });
+});
 
 
 // getter
