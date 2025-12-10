@@ -16,8 +16,7 @@ function Upload() {
       await axios.post("http://localhost:5050/photos", formData, {
 
         headers: {
-          "Content-Type": "multipart/form-data",
-        },
+          "Content-Type": "multipart/form-data",},
       });
       alert("Upload successful!");
     } catch (err) {
