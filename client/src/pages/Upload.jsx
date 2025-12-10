@@ -13,7 +13,8 @@ function Upload() {
     formData.append("title", title);
 
     try {
-      await axios.post("http://localhost:5050/upload", formData, {
+      await axios.post("http://localhost:5050/photos", formData, {
+
         headers: {
           "Content-Type": "multipart/form-data",
         },

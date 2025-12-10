@@ -1,28 +1,22 @@
-import { Routes, Route } from "react-router-dom";
-import Gallery from "./Gallery";
-import Upload from "./Pages/Upload";
+import { Routes, Route, Link } from "react-router-dom";
+import Upload from "./Pages/Upload.jsx";
+import Gallery from "./Pages/Gallery.jsx"; 
 
 function App() {
   return (
-    <Routes>
-      <Route path="/" element={
-        <div className="app-container">
-          <h1>Photo Gallery</h1>
-  
-          <div className="gallery-grid">
-            {photos.map((photo) => (
-              <div className="photo-card" key={photo.id}>
-                <img src={photo.image_url} alt={photo.title} />
-                <h3>{photo.title}</h3>
-                <p>{new Date(photo.created_at).toLocaleString()}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      } />
-  
-      <Route path="/Upload" element={<Upload />} />
-    </Routes>
+    <div>
+      {/* Navigation Buttons */}
+      <nav>
+        <Link to="/">Home</Link> | <Link to="/upload">Upload</Link>
+      </nav>
+
+      {/* Routes */}
+      <Routes>
+        <Route path="/" element={<Gallery />} />
+        <Route path="/upload" element={<Upload />} />
+      </Routes>
+    </div>
   );
 }
+
 export default App;
