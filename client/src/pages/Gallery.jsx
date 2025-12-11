@@ -13,31 +13,33 @@ function Gallery() {
   const handleDelete = async (id) => {
     try {
       await axios.delete(`http://localhost:5050/photos/${id}`);
-      setPhotos(photos.filter(photo => photo.id !== id)); // Update UI
+      setPhotos(photos.filter(photo => photo.id !== id));
     } catch (err) {
       console.error("Delete error:", err);
       alert("Failed to delete photo");
     }
   };
-  
 
   return (
     <div className="app-container">
       <h1>Photo Gallery</h1>
 
-      <div className="photo-card" key={photo.id}>
-  <img
-    src={`http://localhost:5050/uploads/${photo.filename}`}
-    alt={photo.title}
-  />
-  <h3>{photo.title}</h3>
-  <p>{new Date(photo.created_at).toLocaleString()}</p>
+      <div className="gallery-grid">
+        {photos.map(photo => (
+          <div className="photo-card" key={photo.id}>
+            <img
+              src={`http://localhost:5050/uploads/${photo.filename}`}
+              alt={photo.title}
+            />
+            <h3>{photo.title}</h3>
+            <p>{new Date(photo.created_at).toLocaleString()}</p>
 
-  <button onClick={() => handleDelete(photo.id)}>
-    Delete
-  </button>
-</div>
-
+            <button onClick={() => handleDelete(photo.id)}>
+              Delete
+            </button>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
