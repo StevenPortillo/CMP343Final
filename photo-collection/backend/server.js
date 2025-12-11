@@ -109,6 +109,28 @@ app.post("/photos", upload.single("photo"), async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 });
+// DELETE a photo
+app.delete("/photos/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+  
+      // Delete from database
+      const result = await client.query(
+        "DELETE FROM photos WHERE id = $1 RETURNING *",
+        [id]
+      );
+  
+      if (result.rowCount === 0) {
+        return res.status(404).json({ error: "Photo not found" });
+      }
+  
+      res.json({ message: "Photo deleted successfully" });
+    } catch (err) {
+      console.error("Error deleting photo:", err);
+      res.status(500).json({ error: "Server error" });
+    }
+  });
+  
 
 
 
