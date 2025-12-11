@@ -3,12 +3,11 @@ import axios from "axios";
 
 function Gallery() {
   const [photos, setPhotos] = useState([]);
-  const [search, setSearch] = useState("");
+  const [fullscreenPhoto, setFullscreenPhoto] = useState(null);
 
-  // --- Editing State ---
-  const [isEditing, setIsEditing] = useState(false);
+  // Editing metadata states
+  const [editingPhoto, setEditingPhoto] = useState(null);
   const [editData, setEditData] = useState({
-    id: null,
     title: "",
     description: "",
     camera_model: "",
@@ -18,151 +17,156 @@ function Gallery() {
   });
 
   useEffect(() => {
-    axios.get("http://localhost:5050/photos")
+    axios
+      .get("http://localhost:5050/photos")
       .then((res) => setPhotos(res.data))
       .catch((err) => console.error("Error fetching photos:", err));
   }, []);
 
-  // ========== DELETE PHOTO ==========
+  // ------- DELETE PHOTO -------
   const handleDelete = async (id) => {
-    const confirmed = window.confirm("Are you sure you want to delete this photo?");
-    if (!confirmed) return;
+    const confirmDelete = window.confirm("Delete this photo?");
+
+    if (!confirmDelete) return;
 
     try {
       await axios.delete(`http://localhost:5050/photos/${id}`);
-      setPhotos(photos.filter(photo => photo.id !== id));
+      setPhotos(photos.filter((photo) => photo.id !== id));
     } catch (err) {
       console.error("Delete error:", err);
       alert("Failed to delete photo");
     }
   };
 
-  // ========== OPEN EDIT MODAL ==========
-  const openEditModal = (photo) => {
+  // ------- OPEN EDIT FORM -------
+  const handleEditClick = (photo) => {
+    setEditingPhoto(photo);
     setEditData({
-      id: photo.id,
       title: photo.title,
-      description: photo.description,
-      camera_model: photo.camera_model,
-      iso: photo.iso,
-      aperture: photo.aperture,
-      shutter_speed: photo.shutter_speed,
+      description: photo.description || "",
+      camera_model: photo.camera_model || "",
+      iso: photo.iso || "",
+      aperture: photo.aperture || "",
+      shutter_speed: photo.shutter_speed || ""
     });
-    setIsEditing(true);
   };
 
-  // ========== UPDATE PHOTO ==========
-  const handleEditSave = async () => {
+  // ------- SAVE EDITS -------
+  const handleSaveEdit = async () => {
     try {
-      const res = await axios.put(`http://localhost:5050/photos/${editData.id}`, editData);
+      const res = await axios.put(
+        `http://localhost:5050/photos/${editingPhoto.id}`,
+        editData
+      );
 
       // Update UI
-      setPhotos(photos.map(p => (p.id === editData.id ? res.data : p)));
+      setPhotos(
+        photos.map((p) =>
+          p.id === editingPhoto.id ? res.data : p
+        )
+      );
 
-      setIsEditing(false);
       alert("Metadata updated!");
+      setEditingPhoto(null);
     } catch (err) {
-      console.error("Update failed:", err);
-      alert("Failed to update photo");
+      console.error("Update error:", err);
+      alert("Failed to update metadata");
     }
   };
-
-  // Filtered results for search
-  const filteredPhotos = photos.filter(photo =>
-    photo.title.toLowerCase().includes(search.toLowerCase())
-  );
 
   return (
     <div className="app-container">
       <h1>Photo Gallery</h1>
 
-      {/* SEARCH BAR */}
-      <input
-        type="text"
-        placeholder="Search photos..."
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        style={{ marginBottom: "20px", padding: "8px", width: "250px" }}
-      />
-
-      {/* PHOTO GRID */}
       <div className="gallery-grid">
-        {filteredPhotos.map((photo) => (
+        {photos.map((photo) => (
           <div className="photo-card" key={photo.id}>
             <img
               src={`http://localhost:5050/uploads/${photo.filename}`}
               alt={photo.title}
+              onClick={() => setFullscreenPhoto(photo)}
+              style={{ cursor: "pointer" }}
             />
+
             <h3>{photo.title}</h3>
-            <p>{new Date(photo.created_at).toLocaleString()}</p>
 
-            <button onClick={() => handleDelete(photo.id)}>
-              Delete
-            </button>
-
-            <button onClick={() => openEditModal(photo)} style={{ marginLeft: "10px" }}>
-              Edit
-            </button>
+            <button onClick={() => handleDelete(photo.id)}>Delete</button>
+            <button onClick={() => handleEditClick(photo)}>Edit Metadata</button>
           </div>
         ))}
       </div>
 
-      {/* EDIT MODAL */}
-      {isEditing && (
+      {/* ---------- FULLSCREEN VIEW ---------- */}
+      {fullscreenPhoto && (
+        <div className="fullscreen-overlay" onClick={() => setFullscreenPhoto(null)}>
+          <img
+            src={`http://localhost:5050/uploads/${fullscreenPhoto.filename}`}
+            alt="fullscreen"
+            className="fullscreen-image"
+          />
+        </div>
+      )}
+
+      {/* ---------- EDIT METADATA MODAL ---------- */}
+      {editingPhoto && (
         <div className="modal">
           <div className="modal-content">
             <h2>Edit Metadata</h2>
 
             <input
               type="text"
-              placeholder="Title"
               value={editData.title}
               onChange={(e) => setEditData({ ...editData, title: e.target.value })}
+              placeholder="Title"
             />
 
-            <input
-              type="text"
-              placeholder="Description"
+            <textarea
               value={editData.description}
-              onChange={(e) => setEditData({ ...editData, description: e.target.value })}
+              onChange={(e) =>
+                setEditData({ ...editData, description: e.target.value })
+              }
+              placeholder="Description"
             />
 
             <input
               type="text"
-              placeholder="Camera Model"
               value={editData.camera_model}
-              onChange={(e) => setEditData({ ...editData, camera_model: e.target.value })}
+              onChange={(e) =>
+                setEditData({ ...editData, camera_model: e.target.value })
+              }
+              placeholder="Camera Model"
             />
 
             <input
-              type="number"
-              placeholder="ISO"
+              type="text"
               value={editData.iso}
               onChange={(e) => setEditData({ ...editData, iso: e.target.value })}
+              placeholder="ISO"
             />
 
             <input
               type="text"
-              placeholder="Aperture"
               value={editData.aperture}
-              onChange={(e) => setEditData({ ...editData, aperture: e.target.value })}
+              onChange={(e) =>
+                setEditData({ ...editData, aperture: e.target.value })
+              }
+              placeholder="Aperture"
             />
 
             <input
               type="text"
-              placeholder="Shutter Speed"
               value={editData.shutter_speed}
-              onChange={(e) => setEditData({ ...editData, shutter_speed: e.target.value })}
+              onChange={(e) =>
+                setEditData({ ...editData, shutter_speed: e.target.value })
+              }
+              placeholder="Shutter Speed"
             />
 
-            <button onClick={handleEditSave}>Save</button>
-            <button onClick={() => setIsEditing(false)} style={{ marginLeft: "10px" }}>
-              Cancel
-            </button>
+            <button onClick={handleSaveEdit}>Save</button>
+            <button onClick={() => setEditingPhoto(null)}>Cancel</button>
           </div>
         </div>
       )}
-
     </div>
   );
 }
