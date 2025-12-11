@@ -130,6 +130,50 @@ app.delete("/photos/:id", async (req, res) => {
       res.status(500).json({ error: "Server error" });
     }
   });
+  // UPDATE a photo's metadata
+app.put("/photos/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      title,
+      description,
+      camera_model,
+      iso,
+      aperture,
+      shutter_speed
+    } = req.body;
+
+    const query = `
+      UPDATE photos
+      SET title = $1,
+          description = $2,
+          camera_model = $3,
+          iso = $4,
+          aperture = $5,
+          shutter_speed = $6
+      WHERE id = $7
+      RETURNING *;
+    `;
+
+    const values = [
+      title,
+      description,
+      camera_model,
+      iso,
+      aperture,
+      shutter_speed,
+      id
+    ];
+
+    const updated = await client.query(query, values);
+
+    res.json(updated.rows[0]);
+  } catch (err) {
+    console.error("Update error:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
   
 
 
